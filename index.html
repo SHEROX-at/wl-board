@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wiener Linien Departure Board</title>
+<style>
+body {
+    background: black;
+    color: orange;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+.header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 32px;
+    margin-bottom: 20px;
+}
+.line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 42px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,165,0,0.3);
+}
+.minutes {
+    font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div>Abfahrten</div>
+    <div id="clock"></div>
+</div>
+
+<div id="board">Lade Daten...</div>
+
+<script>
+const RBL = 4903;
+
+async function loadData() {
+    try {
+        const res = await fetch("https://www.wienerlinien.at/ogd_realtime/monitor?rbl=" + RBL);
+        const data = await res.json();
+
+        let html = "";
+
+        const monitors = data.data.monitors;
+
+        monitors.forEach(monitor => {
+            monitor.lines.forEach(line => {
+                const name = line.name;
+                const towards = line.towards;
+
+                const departures = line.departures.departure;
+
+                departures.slice(0, 1).forEach(dep => {
+                    const time = dep.departureTime.countdown;
+
+                    html += '<div class="line">' +
+                            '<div>' + name + ' → ' + towards + '</div>' +
+                            '<div class="minutes">' + time + ' min</div>' +
+                            '</div>';
+                });
+            });
+        });
+
+        document.getElementById("board").innerHTML = html || "Keine Daten";
+
+    } catch (err) {
+        document.getElementById("board").innerHTML = "Fehler beim Laden";
+        console.error(err);
+    }
+}
+
+function updateClock() {
+    const now = new Date();
+    const time = now.toLocaleTimeString("de-AT", {hour: '2-digit', minute:'2-digit'});
+    document.getElementById("clock").innerText = time;
+}
+
+setInterval(loadData, 15000);
+setInterval(updateClock, 1000);
+
+loadData();
+updateClock();
+</script>
+
+</body>
+</html>
