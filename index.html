@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wiener Linien Board</title>
+
 <style>
 body {
     background: black;
@@ -30,6 +31,7 @@ body {
 }
 </style>
 </head>
+
 <body>
 
 <div class="header">
@@ -44,9 +46,9 @@ const RBL = 343;
 
 async function loadData() {
     try {
-        const url = "https://corsproxy.io/?https://www.wienerlinien.at/ogd_realtime/monitor?rbl=" + RBL;
-        const res = await fetch(url);
-        const data = await res.json();
+        const res = await fetch("https://api.allorigins.win/get?url=" + encodeURIComponent("https://www.wienerlinien.at/ogd_realtime/monitor?rbl=" + RBL));
+        const raw = await res.json();
+        const data = JSON.parse(raw.contents);
 
         let html = "";
 
@@ -72,6 +74,7 @@ async function loadData() {
 
     } catch (e) {
         document.getElementById("board").innerHTML = "Fehler beim Laden";
+        console.error(e);
     }
 }
 
