@@ -3,37 +3,29 @@
 <body style="background:black;color:orange;font-family:Arial">
 
 <h1 id="clock"></h1>
-<div id="board">Lade...</div>
+<div id="board"></div>
 
 <script>
-const URL = "https://corsproxy.io/?https://www.wienerlinien.at/ogd_realtime/monitor?rbl=343";
+function loadFake() {
+  const data = [
+    {line:"U4", to:"Hütteldorf", time:"SOFORT"},
+    {line:"U4", to:"Heiligenstadt", time:"3 min"},
+    {line:"U4", to:"Hütteldorf", time:"7 min"}
+  ];
 
-async function load() {
-  try {
-    const res = await fetch(URL);
-    const data = await res.json();
+  let html = "";
+  data.forEach(d=>{
+    html += `<div style="font-size:30px">${d.line} → ${d.to} (${d.time})</div>`;
+  });
 
-    let html = "";
-
-    data.data.monitors[0].lines.forEach(l => {
-      l.departures.departure.slice(0,3).forEach(d => {
-        html += `<div>${l.name} → ${l.towards} (${d.departureTime.countdown} min)</div>`;
-      });
-    });
-
-    document.getElementById("board").innerHTML = html;
-
-  } catch {
-    document.getElementById("board").innerHTML = "FEHLER";
-  }
+  document.getElementById("board").innerHTML = html;
 }
-
-setInterval(load, 15000);
-load();
 
 setInterval(()=>{
   document.getElementById("clock").innerText = new Date().toLocaleTimeString();
 },1000);
+
+loadFake();
 </script>
 
 </body>
