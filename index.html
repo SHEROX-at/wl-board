@@ -1,58 +1,15 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WL Board</title>
-
-<style>
-body{margin:0;background:black;color:#ff9900;font-family:Arial;padding:40px}
-.header{display:flex;justify-content:space-between;font-size:50px}
-.station{font-size:60px;margin:20px 0}
-.line{display:flex;justify-content:space-between;font-size:50px;padding:10px 0;border-bottom:1px solid #333}
-</style>
-</head>
-
-<body>
-
-<div class="header">
-<div>Abfahrten</div>
-<div id="clock"></div>
-</div>
-
-<div class="station">Hietzing</div>
-<div id="board">Lade...</div>
-
 <script>
 async function load(){
- const res = await fetch("/api/wl");
- const data = await res.json();
+  try {
+    const res = await fetch("/api/wl");
+    const text = await res.text(); // WICHTIG: kein json()
 
- let html = "";
+    document.getElementById("board").innerText = text;
 
- data.data.monitors[0].lines.forEach(l=>{
-   l.departures.departure.slice(0,3).forEach(d=>{
-     const c = d.departureTime.countdown;
-     const t = c===0?"SOFORT":c+" min";
-
-     html += `<div class="line">
-       <div>${l.name} → ${l.towards}</div>
-       <div>${t}</div>
-     </div>`;
-   });
- });
-
- document.getElementById("board").innerHTML = html;
+  } catch (e) {
+    document.getElementById("board").innerText = "API NICHT ERREICHBAR";
+  }
 }
 
-setInterval(load,15000);
 load();
-
-setInterval(()=>{
- document.getElementById("clock").innerText =
- new Date().toLocaleTimeString("de-AT",{hour:'2-digit',minute:'2-digit'});
-},1000);
 </script>
-
-</body>
-</html>
