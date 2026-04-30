@@ -44,7 +44,7 @@ const RBL = 4903;
 
 async function loadData() {
     try {
-        const res = await fetch("https://www.wienerlinien.at/ogd_realtime/monitor?rbl=" + RBL);
+const res = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent("https://www.wienerlinien.at/ogd_realtime/monitor?rbl=" + RBL));
         const data = await res.json();
 
         let html = "";
