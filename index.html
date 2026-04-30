@@ -61,7 +61,7 @@ body {
 <div id="board">Lade Daten...</div>
 
 <script>
-const RBL = "602009,602010"; // beide Richtungen in EINEM request
+const RBL = "602009,602010";
 
 async function loadData() {
     try {
@@ -72,27 +72,59 @@ async function loadData() {
         const raw = await res.json();
         const data = JSON.parse(raw.contents);
 
-        let html = "";
+        let entries = [];
 
         data.data.monitors.forEach(monitor => {
             monitor.lines.forEach(line => {
                 const name = line.name;
                 const towards = line.towards;
 
-                line.departures.departure.slice(0, 2).forEach(dep => {
-                    const time = dep.departureTime.countdown;
+                line.departures.departure.forEach(dep => {
+                    let display;
+                    let sortValue;
 
-                    html += `
-                    <div class="line">
-                        <div class="left">
-                            <div class="linename">${name}</div>
-                            <div>→ ${towards}</div>
-                        </div>
-                        <div class="minutes">${time} min</div>
-                    </div>
-                    `;
+                    if (dep.departureTime.countdown !== undefined) {
+                        let c = dep.departureTime.countdown;
+
+                        if (c === 0) {
+                            display = "SOFORT";
+                            sortValue = 0;
+                        } else {
+                            display = c + " min";
+                            sortValue = c;
+                        }
+
+                    } else if (dep.departureTime.timePlanned) {
+                        const date = new Date(dep.departureTime.timePlanned);
+                        display = date.toLocaleTimeString("de-AT", {hour: "2-digit", minute: "2-digit"});
+                        sortValue = date.getTime();
+                    }
+
+                    entries.push({
+                        name,
+                        towards,
+                        display,
+                        sortValue
+                    });
                 });
             });
+        });
+
+        // sortieren nach Zeit
+        entries.sort((a, b) => a.sortValue - b.sortValue);
+
+        // nur die nächsten 5 anzeigen
+        let html = "";
+        entries.slice(0, 5).forEach(e => {
+            html += `
+            <div class="line">
+                <div class="left">
+                    <div class="linename">${e.name}</div>
+                    <div>→ ${e.towards}</div>
+                </div>
+                <div class="minutes">${e.display}</div>
+            </div>
+            `;
         });
 
         document.getElementById("board").innerHTML = html || "Keine Daten";
