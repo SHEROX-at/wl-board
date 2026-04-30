@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wiener Linien Board</title>
+<title>WL Board</title>
 
 <style>
 body {
@@ -13,48 +13,25 @@ body {
     margin: 0;
     padding: 30px;
 }
-
 .header {
     display: flex;
     justify-content: space-between;
     font-size: 50px;
-    margin-bottom: 20px;
 }
-
 .station {
     font-size: 60px;
-    margin-bottom: 30px;
+    margin: 20px 0;
 }
-
 .line {
     display: flex;
     justify-content: space-between;
-    font-size: 55px;
-    padding: 15px 0;
-    border-bottom: 2px solid rgba(255,153,0,0.2);
-    opacity: 0;
-    transform: translateY(10px);
-    animation: fadeIn 0.4s forwards;
+    font-size: 50px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,153,0,0.2);
 }
-
 .left {
     display: flex;
-    gap: 20px;
-}
-
-.linename {
-    font-weight: bold;
-}
-
-.minutes {
-    font-weight: bold;
-}
-
-@keyframes fadeIn {
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    gap: 15px;
 }
 </style>
 </head>
@@ -75,40 +52,39 @@ const RBL = "602009,602010";
 
 async function loadData() {
     try {
-        const url = "https://api.allorigins.win/get?url=" +
-            encodeURIComponent("https://www.wienerlinien.at/ogd_realtime/monitor?rbl=" + RBL);
+        // 👉 neuer stabilerer Proxy
+        const url = "https://corsproxy.io/?https://www.wienerlinien.at/ogd_realtime/monitor?rbl=" + RBL;
 
         const res = await fetch(url);
-        const raw = await res.json();
-        const data = JSON.parse(raw.contents);
+        const data = await res.json();
+
+        if (!data?.data?.monitors) {
+            document.getElementById("board").innerHTML = "Keine Daten";
+            return;
+        }
 
         let entries = [];
 
-        data.data.monitors.forEach(monitor => {
-            monitor.lines.forEach(line => {
-                line.departures.departure.forEach(dep => {
+        data.data.monitors.forEach(m => {
+            m.lines.forEach(l => {
+                l.departures.departure.forEach(d => {
 
                     let display;
                     let sort;
 
-                    if (dep.departureTime.countdown !== undefined) {
-                        let c = dep.departureTime.countdown;
-                        if (c === 0) {
-                            display = "SOFORT";
-                            sort = 0;
-                        } else {
-                            display = c + " min";
-                            sort = c;
-                        }
-                    } else if (dep.departureTime.timePlanned) {
-                        const date = new Date(dep.departureTime.timePlanned);
+                    if (d.departureTime.countdown !== undefined) {
+                        let c = d.departureTime.countdown;
+                        display = c === 0 ? "SOFORT" : c + " min";
+                        sort = c;
+                    } else if (d.departureTime.timePlanned) {
+                        const date = new Date(d.departureTime.timePlanned);
                         display = date.toLocaleTimeString("de-AT", {hour:"2-digit", minute:"2-digit"});
                         sort = date.getTime();
                     }
 
                     entries.push({
-                        name: line.name,
-                        towards: line.towards,
+                        name: l.name,
+                        towards: l.towards,
                         display,
                         sort
                     });
@@ -123,24 +99,23 @@ async function loadData() {
             html += `
             <div class="line">
                 <div class="left">
-                    <div class="linename">${e.name}</div>
+                    <div>${e.name}</div>
                     <div>→ ${e.towards}</div>
                 </div>
-                <div class="minutes">${e.display}</div>
+                <div>${e.display}</div>
             </div>`;
         });
 
         document.getElementById("board").innerHTML = html || "Keine Daten";
 
-    } catch (e) {
+    } catch {
         document.getElementById("board").innerHTML = "Fehler beim Laden";
     }
 }
 
 function updateClock() {
-    const now = new Date();
     document.getElementById("clock").innerText =
-        now.toLocaleTimeString("de-AT", {hour:'2-digit', minute:'2-digit'});
+        new Date().toLocaleTimeString("de-AT", {hour:'2-digit', minute:'2-digit'});
 }
 
 setInterval(loadData, 15000);
