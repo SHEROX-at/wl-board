@@ -48,71 +48,64 @@ body {
 <div id="board">Lade Daten...</div>
 
 <script>
-const RBL = "602009,602010";
+const RBL = "602009"; // nur eine Richtung jetzt
 
-async function loadData() {
-    try {
-        // 👉 neuer stabilerer Proxy
-        const url = "https://corsproxy.io/?https://www.wienerlinien.at/ogd_realtime/monitor?rbl=" + RBL;
+function loadData() {
+    const script = document.createElement("script");
 
-        const res = await fetch(url);
-        const data = await res.json();
+    script.src = "https://www.wienerlinien.at/ogd_realtime/monitor?rbl=" + RBL + "&callback=handleData";
 
-        if (!data?.data?.monitors) {
-            document.getElementById("board").innerHTML = "Keine Daten";
-            return;
-        }
+    document.body.appendChild(script);
+}
 
-        let entries = [];
+function handleData(data) {
+    let entries = [];
 
-        data.data.monitors.forEach(m => {
-            m.lines.forEach(l => {
-                l.departures.departure.forEach(d => {
+    data.data.monitors.forEach(m => {
+        m.lines.forEach(l => {
+            l.departures.departure.forEach(d => {
 
-                    let display;
-                    let sort;
+                let display;
+                let sort;
 
-                    if (d.departureTime.countdown !== undefined) {
-                        let c = d.departureTime.countdown;
-                        display = c === 0 ? "SOFORT" : c + " min";
-                        sort = c;
-                    } else if (d.departureTime.timePlanned) {
-                        const date = new Date(d.departureTime.timePlanned);
-                        display = date.toLocaleTimeString("de-AT", {hour:"2-digit", minute:"2-digit"});
-                        sort = date.getTime();
-                    }
+                if (d.departureTime.countdown !== undefined) {
+                    let c = d.departureTime.countdown;
+                    display = c === 0 ? "SOFORT" : c + " min";
+                    sort = c;
+                } else if (d.departureTime.timePlanned) {
+                    const date = new Date(d.departureTime.timePlanned);
+                    display = date.toLocaleTimeString("de-AT", {hour:"2-digit", minute:"2-digit"});
+                    sort = date.getTime();
+                }
 
-                    entries.push({
-                        name: l.name,
-                        towards: l.towards,
-                        display,
-                        sort
-                    });
+                entries.push({
+                    name: l.name,
+                    towards: l.towards,
+                    display,
+                    sort
                 });
             });
         });
+    });
 
-        entries.sort((a,b) => a.sort - b.sort);
+    entries.sort((a,b) => a.sort - b.sort);
 
-        let html = "";
-        entries.slice(0,5).forEach(e => {
-            html += `
-            <div class="line">
-                <div class="left">
-                    <div>${e.name}</div>
-                    <div>→ ${e.towards}</div>
-                </div>
-                <div>${e.display}</div>
-            </div>`;
-        });
+    let html = "";
+    entries.slice(0,5).forEach(e => {
+        html += `
+        <div class="line">
+            <div class="left">
+                <div>${e.name}</div>
+                <div>→ ${e.towards}</div>
+            </div>
+            <div>${e.display}</div>
+        </div>`;
+    });
 
-        document.getElementById("board").innerHTML = html || "Keine Daten";
-
-    } catch {
-        document.getElementById("board").innerHTML = "Fehler beim Laden";
-    }
+    document.getElementById("board").innerHTML = html || "Keine Daten";
 }
 
+// Uhr
 function updateClock() {
     document.getElementById("clock").innerText =
         new Date().toLocaleTimeString("de-AT", {hour:'2-digit', minute:'2-digit'});
