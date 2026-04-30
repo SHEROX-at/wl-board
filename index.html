@@ -8,24 +8,41 @@
 <style>
 body {
     background: black;
-    color: orange;
+    color: #ff9900;
     font-family: Arial, sans-serif;
     margin: 0;
-    padding: 20px;
+    padding: 30px;
 }
+
 .header {
     display: flex;
     justify-content: space-between;
-    font-size: 32px;
+    font-size: 50px;
+    margin-bottom: 30px;
+}
+
+.station {
+    font-size: 60px;
     margin-bottom: 20px;
 }
+
 .line {
     display: flex;
     justify-content: space-between;
-    font-size: 42px;
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(255,165,0,0.3);
+    font-size: 60px;
+    padding: 20px 0;
+    border-bottom: 2px solid rgba(255,153,0,0.3);
 }
+
+.left {
+    display: flex;
+    gap: 20px;
+}
+
+.linename {
+    font-weight: bold;
+}
+
 .minutes {
     font-weight: bold;
 }
@@ -39,36 +56,45 @@ body {
     <div id="clock"></div>
 </div>
 
+<div class="station">Hietzing</div>
+
 <div id="board">Lade Daten...</div>
 
 <script>
-const RBL = 343;
+const RBLs = [602009, 602010];
 
 async function loadData() {
     try {
-        const res = await fetch("https://api.allorigins.win/get?url=" + encodeURIComponent("https://www.wienerlinien.at/ogd_realtime/monitor?rbl=" + RBL));
-        const raw = await res.json();
-        const data = JSON.parse(raw.contents);
-
         let html = "";
 
-        data.data.monitors.forEach(monitor => {
-            monitor.lines.forEach(line => {
-                const name = line.name;
-                const towards = line.towards;
+        for (let rbl of RBLs) {
+            const res = await fetch("https://api.allorigins.win/get?url=" + encodeURIComponent("https://www.wienerlinien.at/ogd_realtime/monitor?rbl=" + rbl));
+            const raw = await res.json();
+            const data = JSON.parse(raw.contents);
 
-                const departures = line.departures.departure;
+            data.data.monitors.forEach(monitor => {
+                monitor.lines.forEach(line => {
+                    const name = line.name;
+                    const towards = line.towards;
 
-                departures.slice(0, 2).forEach(dep => {
-                    const time = dep.departureTime.countdown;
+                    const departures = line.departures.departure;
 
-                    html += "<div class='line'>" +
-                            "<div>" + name + " → " + towards + "</div>" +
-                            "<div class='minutes'>" + time + " min</div>" +
-                            "</div>";
+                    departures.slice(0, 2).forEach(dep => {
+                        const time = dep.departureTime.countdown;
+
+                        html += `
+                        <div class="line">
+                            <div class="left">
+                                <div class="linename">${name}</div>
+                                <div>→ ${towards}</div>
+                            </div>
+                            <div class="minutes">${time} min</div>
+                        </div>
+                        `;
+                    });
                 });
             });
-        });
+        }
 
         document.getElementById("board").innerHTML = html || "Keine Daten";
 
