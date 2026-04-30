@@ -1,1 +1,202 @@
-<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>WL Anzeige</title><style>body{margin:0;background:black;color:#ffd300;font-family:"Courier New",monospace}.container{padding:30px}.row{display:flex;justify-content:space-between;font-size:60px;margin-bottom:20px}.left{display:flex;gap:20px}.line{font-weight:bold}.time{width:80px;text-align:right}@keyframes blink{50%{opacity:0}}.blink{animation:blink 1s infinite}</style></head><body><div class="container"><div id="board">Lade...</div></div><script>async function load(){try{const res=await fetch("/api/wl?rbl=602009");const data=await res.json();let entries=[];if(data.data.monitors&&data.data.monitors.length>0){data.data.monitors.forEach(m=>{m.lines.forEach(l=>{l.departures.departure.forEach(d=>{let display,sort;if(d.departureTime.countdown!==undefined){let c=d.departureTime.countdown;display=c===0?"0":c;sort=c}else if(d.departureTime.timePlanned){const date=new Date(d.departureTime.timePlanned);display=date.toLocaleTimeString("de-AT",{hour:"2-digit",minute:"2-digit"});sort=date.getTime()}entries.push({name:l.name,dest:l.towards,display,sort})})})})}else{entries=[{name:"U4",dest:"HÜTTELDORF",display:"00:34"},{name:"U4",dest:"HÜTTELDORF",display:"00:49"},{name:"U4",dest:"HÜTTELDORF",display:"01:04"}]}entries.sort((a,b)=>a.sort-b.sort);let html="";entries.slice(0,3).forEach(e=>{html+=`<div class="row"><div class="left"><div class="line">${e.name}</div><div>${e.dest}</div></div><div class="time ${e.display==="0"?"blink":""}">${e.display}</div></div>`});document.getElementById("board").innerHTML=html}catch(e){document.getElementById("board").innerHTML="FEHLER"}}setInterval(load,15000);load();</script></body></html>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WL Anzeige</title>
+
+<style>
+body {
+    margin: 0;
+    background: black;
+    color: #ffd300;
+    font-family: "Courier New", monospace;
+}
+
+/* Container */
+.container {
+    padding: 20px;
+}
+
+/* Uhr oben */
+.clock {
+    font-size: 28px;
+    text-align: right;
+    margin-bottom: 10px;
+}
+
+/* Zeile */
+.row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 42px;
+    margin-bottom: 18px;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeIn 0.4s forwards;
+}
+
+/* linke Seite */
+.left {
+    display: flex;
+    gap: 12px;
+}
+
+/* Linie fett */
+.line {
+    font-weight: bold;
+}
+
+/* Minuten */
+.time {
+    min-width: 70px;
+    text-align: right;
+    font-weight: bold;
+}
+
+/* blinken bei 0 */
+.blink {
+    animation: blink 1s infinite;
+}
+
+/* Animation */
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0;
+    }
+}
+
+/* Mobile größer */
+@media (max-width: 600px) {
+    .row {
+        font-size: 48px;
+    }
+    .clock {
+        font-size: 32px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="clock" id="clock"></div>
+    <div id="board">Lade...</div>
+</div>
+
+<script>
+const API = "/api/wl?rbl=602009";
+
+async function loadData() {
+    try {
+        const res = await fetch(API);
+        const data = await res.json();
+
+        let entries = [];
+
+        // Wenn Echtzeit da ist
+        if (data.data.monitors && data.data.monitors.length > 0) {
+            data.data.monitors.forEach(monitor => {
+                monitor.lines.forEach(line => {
+                    line.departures.departure.forEach(dep => {
+
+                        let display;
+                        let sort;
+
+                        // Minutenanzeige
+                        if (dep.departureTime.countdown !== undefined) {
+                            let c = dep.departureTime.countdown;
+
+                            if (c === 0) {
+                                display = "0";
+                                sort = 0;
+                            } else {
+                                display = c + " min";
+                                sort = c;
+                            }
+
+                        // Uhrzeit fallback
+                        } else if (dep.departureTime.timePlanned) {
+                            const date = new Date(dep.departureTime.timePlanned);
+                            display = date.toLocaleTimeString("de-AT", {
+                                hour: "2-digit",
+                                minute: "2-digit"
+                            });
+                            sort = date.getTime();
+                        }
+
+                        entries.push({
+                            line: line.name,
+                            dest: line.towards,
+                            display: display,
+                            sort: sort
+                        });
+                    });
+                });
+            });
+
+        } else {
+            // Fallback wenn keine Daten
+            entries = [
+                { line: "U4", dest: "HÜTTELDORF", display: "00:34", sort: 1 },
+                { line: "U4", dest: "HÜTTELDORF", display: "00:49", sort: 2 },
+                { line: "U4", dest: "HÜTTELDORF", display: "01:04", sort: 3 }
+            ];
+        }
+
+        // sortieren
+        entries.sort((a, b) => a.sort - b.sort);
+
+        // anzeigen
+        let html = "";
+
+        entries.slice(0, 3).forEach(e => {
+            html += `
+            <div class="row">
+                <div class="left">
+                    <div class="line">${e.line}</div>
+                    <div>${e.dest}</div>
+                </div>
+                <div class="time ${e.display === "0" ? "blink" : ""}">
+                    ${e.display}
+                </div>
+            </div>`;
+        });
+
+        document.getElementById("board").innerHTML = html;
+
+    } catch (e) {
+        document.getElementById("board").innerHTML = "FEHLER";
+    }
+}
+
+// Uhr
+function updateClock() {
+    const now = new Date();
+    document.getElementById("clock").innerText =
+        now.toLocaleTimeString("de-AT", {
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+}
+
+// interval
+setInterval(loadData, 15000);
+setInterval(updateClock, 1000);
+
+// start
+loadData();
+updateClock();
+</script>
+
+</body>
+</html>
