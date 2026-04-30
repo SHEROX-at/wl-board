@@ -61,40 +61,39 @@ body {
 <div id="board">Lade Daten...</div>
 
 <script>
-const RBLs = [602009, 602010];
+const RBL = "602009,602010"; // beide Richtungen in EINEM request
 
 async function loadData() {
     try {
+        const url = "https://api.allorigins.win/get?url=" +
+            encodeURIComponent("https://www.wienerlinien.at/ogd_realtime/monitor?rbl=" + RBL);
+
+        const res = await fetch(url);
+        const raw = await res.json();
+        const data = JSON.parse(raw.contents);
+
         let html = "";
 
-        for (let rbl of RBLs) {
-            const res = await fetch("https://api.allorigins.win/get?url=" + encodeURIComponent("https://www.wienerlinien.at/ogd_realtime/monitor?rbl=" + rbl));
-            const raw = await res.json();
-            const data = JSON.parse(raw.contents);
+        data.data.monitors.forEach(monitor => {
+            monitor.lines.forEach(line => {
+                const name = line.name;
+                const towards = line.towards;
 
-            data.data.monitors.forEach(monitor => {
-                monitor.lines.forEach(line => {
-                    const name = line.name;
-                    const towards = line.towards;
+                line.departures.departure.slice(0, 2).forEach(dep => {
+                    const time = dep.departureTime.countdown;
 
-                    const departures = line.departures.departure;
-
-                    departures.slice(0, 2).forEach(dep => {
-                        const time = dep.departureTime.countdown;
-
-                        html += `
-                        <div class="line">
-                            <div class="left">
-                                <div class="linename">${name}</div>
-                                <div>→ ${towards}</div>
-                            </div>
-                            <div class="minutes">${time} min</div>
+                    html += `
+                    <div class="line">
+                        <div class="left">
+                            <div class="linename">${name}</div>
+                            <div>→ ${towards}</div>
                         </div>
-                        `;
-                    });
+                        <div class="minutes">${time} min</div>
+                    </div>
+                    `;
                 });
             });
-        }
+        });
 
         document.getElementById("board").innerHTML = html || "Keine Daten";
 
