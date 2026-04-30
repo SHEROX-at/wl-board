@@ -1,15 +1,25 @@
+<!DOCTYPE html>
+<html>
+<body style="background:black;color:orange;font-family:Arial">
+
+<h1>DEBUG</h1>
+<div id="out">start...</div>
+
 <script>
-async function load(){
-  try {
-    const res = await fetch("/api/wl");
-    const text = await res.text(); // WICHTIG: kein json()
+document.getElementById("out").innerText = "script läuft";
 
-    document.getElementById("board").innerText = text;
-
-  } catch (e) {
-    document.getElementById("board").innerText = "API NICHT ERREICHBAR";
-  }
-}
-
-load();
+fetch("/api/wl")
+.then(res => {
+  document.getElementById("out").innerText = "api antwortet...";
+  return res.text();
+})
+.then(text => {
+  document.getElementById("out").innerText = text;
+})
+.catch(err => {
+  document.getElementById("out").innerText = "FEHLER: " + err;
+});
 </script>
+
+</body>
+</html>
