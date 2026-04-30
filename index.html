@@ -1,88 +1,39 @@
 <!DOCTYPE html>
-<html lang="de">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WL Board</title>
+<html>
+<body style="background:black;color:orange;font-family:Arial">
 
-<style>
-body {
-    background: black;
-    color: #ff9900;
-    font-family: Arial;
-    padding: 30px;
-}
-.header {
-    display: flex;
-    justify-content: space-between;
-    font-size: 40px;
-}
-.station {
-    font-size: 50px;
-    margin: 20px 0;
-}
-.line {
-    display: flex;
-    justify-content: space-between;
-    font-size: 40px;
-    padding: 10px 0;
-    border-bottom: 1px solid #333;
-}
-</style>
-</head>
-
-<body>
-
-<div class="header">
-    <div>Abfahrten</div>
-    <div id="clock"></div>
-</div>
-
-<div class="station">Hietzing</div>
-<div id="board">Lade Daten...</div>
+<h1 id="clock"></h1>
+<div id="board">Lade...</div>
 
 <script>
-const URL = "https://corsproxy.io/?https://www.wienerlinien.at/ogd_realtime/monitor?rbl=602009";
+const URL = "https://corsproxy.io/?https://www.wienerlinien.at/ogd_realtime/monitor?rbl=343";
 
 async function load() {
-    try {
-        const res = await fetch(URL);
-        const data = await res.json();
+  try {
+    const res = await fetch(URL);
+    const data = await res.json();
 
-        let html = "";
+    let html = "";
 
-        const lines = data.data.monitors[0].lines;
+    data.data.monitors[0].lines.forEach(l => {
+      l.departures.departure.slice(0,3).forEach(d => {
+        html += `<div>${l.name} → ${l.towards} (${d.departureTime.countdown} min)</div>`;
+      });
+    });
 
-        lines.forEach(line => {
-            line.departures.departure.slice(0,3).forEach(dep => {
-                const c = dep.departureTime.countdown;
-                const t = c === 0 ? "SOFORT" : c + " min";
+    document.getElementById("board").innerHTML = html;
 
-                html += `
-                <div class="line">
-                    <div>${line.name} → ${line.towards}</div>
-                    <div>${t}</div>
-                </div>`;
-            });
-        });
-
-        document.getElementById("board").innerHTML = html;
-
-    } catch {
-        document.getElementById("board").innerHTML = "Fehler beim Laden";
-    }
-}
-
-function clock() {
-    document.getElementById("clock").innerText =
-        new Date().toLocaleTimeString("de-AT",{hour:'2-digit',minute:'2-digit'});
+  } catch {
+    document.getElementById("board").innerHTML = "FEHLER";
+  }
 }
 
 setInterval(load, 15000);
-setInterval(clock, 1000);
-
 load();
-clock();
+
+setInterval(()=>{
+  document.getElementById("clock").innerText = new Date().toLocaleTimeString();
+},1000);
 </script>
 
 </body>
