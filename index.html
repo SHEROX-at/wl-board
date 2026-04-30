@@ -1,24 +1,80 @@
 <!DOCTYPE html>
 <html>
-<body style="background:black;color:orange;font-family:Arial">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<h1>DEBUG</h1>
-<div id="out">start...</div>
+<style>
+body {
+    background: black;
+    margin: 0;
+    font-family: monospace;
+    color: #ffd300;
+}
+
+.board {
+    padding: 20px;
+    font-size: 60px;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.line {
+    font-weight: bold;
+    margin-right: 20px;
+}
+
+.dest {
+    flex: 1;
+}
+
+.time {
+    width: 80px;
+    text-align: right;
+}
+
+/* blink wie echte Anzeige */
+.blink {
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    50% { opacity: 0; }
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="board" id="board">
+</div>
 
 <script>
-document.getElementById("out").innerText = "script läuft";
+const data = [
+  {line:"U4", dest:"HÜTTELDORF", time:2},
+  {line:"U4", dest:"HÜTTELDORF", time:6}
+];
 
-fetch("/api/wl")
-.then(res => {
-  document.getElementById("out").innerText = "api antwortet...";
-  return res.text();
-})
-.then(text => {
-  document.getElementById("out").innerText = text;
-})
-.catch(err => {
-  document.getElementById("out").innerText = "FEHLER: " + err;
-});
+function render() {
+  let html = "";
+
+  data.forEach(d => {
+    html += `
+    <div class="row">
+      <div class="line">${d.line}</div>
+      <div class="dest">${d.dest}</div>
+      <div class="time ${d.time===0?"blink":""}">${d.time===0?"0":d.time}</div>
+    </div>`;
+  });
+
+  document.getElementById("board").innerHTML = html;
+}
+
+render();
 </script>
 
 </body>
