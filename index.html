@@ -18,20 +18,23 @@ body {
     display: flex;
     justify-content: space-between;
     font-size: 50px;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 .station {
     font-size: 60px;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
 }
 
 .line {
     display: flex;
     justify-content: space-between;
-    font-size: 60px;
-    padding: 20px 0;
-    border-bottom: 2px solid rgba(255,153,0,0.3);
+    font-size: 55px;
+    padding: 15px 0;
+    border-bottom: 2px solid rgba(255,153,0,0.2);
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeIn 0.4s forwards;
 }
 
 .left {
@@ -45,6 +48,13 @@ body {
 
 .minutes {
     font-weight: bold;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 </style>
 </head>
@@ -76,46 +86,40 @@ async function loadData() {
 
         data.data.monitors.forEach(monitor => {
             monitor.lines.forEach(line => {
-                const name = line.name;
-                const towards = line.towards;
-
                 line.departures.departure.forEach(dep => {
+
                     let display;
-                    let sortValue;
+                    let sort;
 
                     if (dep.departureTime.countdown !== undefined) {
                         let c = dep.departureTime.countdown;
-
                         if (c === 0) {
                             display = "SOFORT";
-                            sortValue = 0;
+                            sort = 0;
                         } else {
                             display = c + " min";
-                            sortValue = c;
+                            sort = c;
                         }
-
                     } else if (dep.departureTime.timePlanned) {
                         const date = new Date(dep.departureTime.timePlanned);
-                        display = date.toLocaleTimeString("de-AT", {hour: "2-digit", minute: "2-digit"});
-                        sortValue = date.getTime();
+                        display = date.toLocaleTimeString("de-AT", {hour:"2-digit", minute:"2-digit"});
+                        sort = date.getTime();
                     }
 
                     entries.push({
-                        name,
-                        towards,
+                        name: line.name,
+                        towards: line.towards,
                         display,
-                        sortValue
+                        sort
                     });
                 });
             });
         });
 
-        // sortieren nach Zeit
-        entries.sort((a, b) => a.sortValue - b.sortValue);
+        entries.sort((a,b) => a.sort - b.sort);
 
-        // nur die nächsten 5 anzeigen
         let html = "";
-        entries.slice(0, 5).forEach(e => {
+        entries.slice(0,5).forEach(e => {
             html += `
             <div class="line">
                 <div class="left">
@@ -123,22 +127,20 @@ async function loadData() {
                     <div>→ ${e.towards}</div>
                 </div>
                 <div class="minutes">${e.display}</div>
-            </div>
-            `;
+            </div>`;
         });
 
         document.getElementById("board").innerHTML = html || "Keine Daten";
 
     } catch (e) {
         document.getElementById("board").innerHTML = "Fehler beim Laden";
-        console.error(e);
     }
 }
 
 function updateClock() {
     const now = new Date();
     document.getElementById("clock").innerText =
-        now.toLocaleTimeString("de-AT", {hour: '2-digit', minute:'2-digit'});
+        now.toLocaleTimeString("de-AT", {hour:'2-digit', minute:'2-digit'});
 }
 
 setInterval(loadData, 15000);
