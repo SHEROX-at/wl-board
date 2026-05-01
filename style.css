@@ -1,0 +1,58 @@
+body {
+    margin: 0;
+    background: #000;
+    color: #ffd300;
+    font-family: monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Board */
+.board {
+    text-align: center;
+    width: 90%;
+}
+
+/* oben */
+.top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 40px;
+}
+
+/* ziel */
+#destination {
+    font-size: 70px;
+    margin: 40px 0;
+}
+
+/* unten */
+.bottom {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+}
+
+#time {
+    font-size: 120px;
+    font-weight: bold;
+}
+
+#star {
+    font-size: 100px;
+    opacity: 0;
+}
+
+/* blink animation */
+@keyframes moveStar {
+    0% { transform: translateX(-20px); opacity: 1; }
+    50% { transform: translateX(20px); opacity: 1; }
+    100% { transform: translateX(-20px); opacity: 1; }
+}
+
+.active-star {
+    animation: moveStar 1s infinite;
+}
