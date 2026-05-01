@@ -1,109 +1,31 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WL Anzeige</title>
 
-<style>
-body {
-    background: black;
-    color: #ffd300;
-    font-family: monospace;
-    margin: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-}
-
-/* große Anzeige */
-.board {
-    text-align: center;
-}
-
-.line {
-    font-size: 70px;
-    margin-bottom: 10px;
-}
-
-.dest {
-    font-size: 70px;
-}
-
-.time {
-    font-size: 120px;
-    font-weight: bold;
-}
-
-/* blink bei 0 */
-.blink {
-    animation: blink 1s infinite;
-}
-
-@keyframes blink {
-    50% { opacity: 0; }
-}
-</style>
-
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
 <div class="board">
-    <div class="line">U4</div>
-    <div class="dest">HÜTTELDORF</div>
-    <div id="time" class="time">--</div>
+
+    <div class="top">
+        <div id="line">U4</div>
+        <div id="platform">Gleis 2</div>
+    </div>
+
+    <div id="destination">HÜTTELDORF</div>
+
+    <div class="bottom">
+        <div id="star">*</div>
+        <div id="time">--</div>
+    </div>
+
 </div>
 
-<script>
-const API = "/api/wl?rbl=602009";
-
-async function load() {
-    try {
-        const res = await fetch(API);
-        const data = await res.json();
-
-        let next = null;
-
-        if (data.data.monitors && data.data.monitors.length > 0) {
-            data.data.monitors.forEach(m => {
-                m.lines.forEach(l => {
-                    l.departures.departure.forEach(d => {
-
-                        if (d.departureTime.countdown !== undefined) {
-                            const c = d.departureTime.countdown;
-
-                            if (next === null || c < next) {
-                                next = c;
-                            }
-                        }
-                    });
-                });
-            });
-        }
-
-        const el = document.getElementById("time");
-
-        if (next === null) {
-            el.innerText = "--";
-            el.classList.remove("blink");
-        } else {
-            el.innerText = next;
-            if (next === 0) {
-                el.classList.add("blink");
-            } else {
-                el.classList.remove("blink");
-            }
-        }
-
-    } catch {
-        document.getElementById("time").innerText = "ERR";
-    }
-}
-
-/* jede 10 sekunden neu */
-setInterval(load, 10000);
-load();
-</script>
-
+<script src="script.js"></script>
 </body>
 </html>
