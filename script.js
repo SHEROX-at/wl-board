@@ -11,20 +11,26 @@ async function loadData() {
         let list = [];
 
         if (data.data.monitors && data.data.monitors.length > 0) {
+
             data.data.monitors.forEach(m => {
                 m.lines.forEach(l => {
+
                     l.departures.departure.forEach(d => {
 
-                        let minutes;
+                        let minutes = null;
 
+                        // countdown vorhanden
                         if (d.departureTime.countdown !== undefined) {
                             minutes = d.departureTime.countdown;
-                        } else if (d.departureTime.timePlanned) {
+                        }
+
+                        // fallback → geplante zeit berechnen
+                        else if (d.departureTime.timePlanned) {
                             const date = new Date(d.departureTime.timePlanned);
                             minutes = Math.round((date - new Date()) / 60000);
                         }
 
-                        if (minutes >= 0) {
+                        if (minutes !== null && minutes >= 0) {
                             list.push({
                                 line: l.name,
                                 dest: l.towards.toUpperCase(),
@@ -32,24 +38,32 @@ async function loadData() {
                                 platform: "2"
                             });
                         }
+
                     });
+
                 });
             });
+
         }
 
-        // sortieren
+        // SORTIEREN (wichtig!)
         list.sort((a, b) => a.minutes - b.minutes);
 
         departures = list;
         currentIndex = 0;
 
     } catch (e) {
-        console.log("Fehler");
+        console.log("Fehler", e);
     }
 }
 
 function showNext() {
-    if (departures.length === 0) return;
+    const elTime = document.getElementById("time");
+
+    if (departures.length === 0) {
+        elTime.innerText = "--";
+        return;
+    }
 
     const d = departures[currentIndex];
 
@@ -68,22 +82,21 @@ function showNext() {
         star.style.opacity = 0;
     }
 
-    // wenn weg → nächste
+    // wenn zug weg → nächste anzeigen
     if (d.minutes <= 0) {
         currentIndex = (currentIndex + 1) % departures.length;
     }
 }
 
-// Daten alle 15s holen
-setInterval(loadData, 15000);
-
-// Anzeige jede Sekunde aktualisieren
+// countdown runterzählen + anzeigen
 setInterval(() => {
     showNext();
 
-    if (departures.length > 0) {
-        departures.forEach(d => d.minutes--);
-    }
+    departures.forEach(d => d.minutes--);
+
 }, 1000);
+
+// neue daten holen
+setInterval(loadData, 15000);
 
 loadData();
